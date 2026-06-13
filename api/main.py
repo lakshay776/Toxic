@@ -1,4 +1,8 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import torch
 import torch.nn as nn
@@ -35,33 +39,56 @@ class ToxicLSTM(nn.Module):
         logits = self.fc(hidden_cat)
         return logits.squeeze(1)
 
-# 3. Setup FastAPI App & Global Variables
-app = FastAPI(title="Toxic Comment Detector", description="Inference API for the PyTorch LSTM model.")
-
+# 3. Setup Global Variables
 word2idx = {}
 model = None
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BEST_THRESHOLD = 0.8460  # The optimal threshold found during training
 MAX_LEN = 100
 
-# 4. Load Models on Startup
-@app.on_event("startup")
-async def load_models():
+# 4. Load Models on Startup using modern lifespan pattern
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global word2idx, model
-    
+
     print("Loading word2idx dictionary...")
     with open("word2idx.json", "r", encoding="utf-8") as f:
         word2idx = json.load(f)
-        
+
     print(f"Loading LSTM model (Vocab Size: {len(word2idx)})...")
     model = ToxicLSTM(vocab_size=len(word2idx)).to(device)
-    
+
     # Load state dict safely handling CPU/GPU
-    model.load_state_dict(torch.load("toxic_lstm (1).pt", map_location=device))
+    model.load_state_dict(torch.load("toxic_lstm.pt", map_location=device, weights_only=False))
     model.eval()  # Set to evaluation mode
     print("Models successfully loaded and ready for inference!")
 
-# 5. Define Preprocessing Functions
+    yield  # App runs here
+
+    # Cleanup on shutdown (optional)
+    print("Shutting down...")
+
+# 5. Setup FastAPI App
+app = FastAPI(
+    title="Toxic Comment Detector",
+    description="Inference API for the PyTorch LSTM model.",
+    lifespan=lifespan,
+)
+
+# Allow all origins so the HTML frontend can call this API from any domain
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# Serve the frontend UI
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def serve_ui():
+    return FileResponse("frontend/index.html")
+
 def preprocess(text: str) -> str:
     text = text.lower()
     text = re.sub(r"http\S+", " ", text)
