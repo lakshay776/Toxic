@@ -364,7 +364,9 @@
   <footer>BiLSTM &nbsp;&#9632;&nbsp; Threshold 0.846 &nbsp;&#9632;&nbsp; Jigsaw Dataset</footer>
 
   <script>
-    const API = "https://toxic-comment-detector.up.railway.app";
+    // Auto-detect: calls the same server that's serving this page
+    // Works on localhost:8005 AND on Railway without any changes
+    const API = window.location.origin;
 
     const commentInput = document.getElementById('commentInput');
     const charCount    = document.getElementById('charCount');
