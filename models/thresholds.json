@@ -1,0 +1,6 @@
+{
+  "lstm_threshold": 0.8133743405342102,
+  "tfidf_threshold": 0.7523806155566949,
+  "max_len": 230,
+  "vocab_size": 20002
+}
