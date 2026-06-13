@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Toxic Comment Detector</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d0f14;
-      --surface:   #161921;
-      --border:    #242830;
-      --muted:     #3a3f4d;
-      --text:      #e2e8f0;
-      --subtext:   #7a8394;
-      --accent:    #6366f1;
-      --accent-glow: rgba(99,102,241,0.25);
-      --safe:      #22c55e;
-      --safe-bg:   rgba(34,197,94,0.08);
-      --toxic:     #ef4444;
-      --toxic-bg:  rgba(239,68,68,0.08);
+      --bg:       #f5f0e8;
+      --surface:  #ede8df;
+      --border:   #c8bfaa;
+      --text:     #1a1612;
+      --subtext:  #6b6358;
+      --accent:   #2d2926;
+      --safe:     #2a7a3b;
+      --safe-bg:  #d6f0da;
+      --toxic:    #9b1c1c;
+      --toxic-bg: #fde8e8;
+      --pixel:    2px;
     }
 
     body {
@@ -31,310 +30,286 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 48px 16px;
+      justify-content: center;
+      padding: 32px 16px;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 20px 20px;
     }
 
-    /* ---------- Header ---------- */
+    /* ---- pixel box mixin ---- */
+    .pixel-box {
+      border: 2px solid var(--accent);
+      box-shadow: 4px 4px 0 var(--accent);
+      border-radius: 0;
+    }
+
+    /* ---- header ---- */
     header {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--accent-glow);
-      border: 1px solid rgba(99,102,241,0.35);
-      color: #a5b4fc;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: .5px;
+    .tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 99px;
-      margin-bottom: 16px;
-    }
-
-    .badge::before {
-      content: '';
-      width: 7px; height: 7px;
       background: var(--accent);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .5; transform: scale(.8); }
+      color: var(--bg);
+      padding: 4px 10px;
+      margin-bottom: 14px;
     }
 
     h1 {
-      font-size: clamp(24px, 4vw, 36px);
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(20px, 4vw, 30px);
       font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: var(--text);
       margin-bottom: 8px;
     }
 
     header p {
+      font-size: 13px;
       color: var(--subtext);
-      font-size: 14px;
-      max-width: 380px;
+      max-width: 360px;
       margin: 0 auto;
-      line-height: 1.6;
     }
 
-    /* ---------- Card ---------- */
+    /* ---- card ---- */
     .card {
       width: 100%;
-      max-width: 640px;
+      max-width: 580px;
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
       padding: 28px;
-      margin-bottom: 16px;
     }
 
-    /* ---------- API URL row ---------- */
-    .url-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .url-row label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--subtext);
-      white-space: nowrap;
-    }
-
-    .url-row input {
-      flex: 1;
-      background: var(--bg);
-      border: 1px solid var(--muted);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'Inter', monospace;
-      font-size: 12px;
-      padding: 7px 12px;
-      outline: none;
-      transition: border-color .2s;
-    }
-
-    .url-row input:focus { border-color: var(--accent); }
-
-    /* ---------- Textarea ---------- */
-    label.main-label {
+    label.input-label {
       display: block;
-      font-size: 13px;
-      font-weight: 500;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
       color: var(--subtext);
-      margin-bottom: 10px;
-      letter-spacing: .3px;
+      margin-bottom: 8px;
     }
 
     textarea {
       width: 100%;
-      height: 130px;
+      height: 140px;
       background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 2px solid var(--border);
       color: var(--text);
       font-family: 'Inter', sans-serif;
       font-size: 14px;
       line-height: 1.6;
-      padding: 14px;
+      padding: 12px 14px;
       resize: vertical;
       outline: none;
-      transition: border-color .2s, box-shadow .2s;
+      transition: border-color .15s;
+      border-radius: 0;
     }
 
-    textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--border); }
 
-    textarea::placeholder { color: var(--muted); }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 18px;
+    }
 
     .char-count {
-      text-align: right;
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--subtext);
     }
 
-    /* ---------- Button ---------- */
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
+    .hint {
+      font-size: 10px;
+      color: var(--border);
     }
+
+    /* ---- button ---- */
+    .btn-row { display: flex; gap: 10px; }
 
     button {
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      transition: all .2s;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 2px solid var(--accent);
+      border-radius: 0;
+      transition: all .1s;
     }
 
     #analyzeBtn {
       flex: 1;
-      padding: 13px;
+      padding: 12px;
       background: var(--accent);
-      color: #fff;
-      font-size: 14px;
-      letter-spacing: .3px;
-      position: relative;
-      overflow: hidden;
+      color: var(--bg);
+      box-shadow: 3px 3px 0 #888;
     }
 
     #analyzeBtn:hover:not(:disabled) {
-      background: #4f52d9;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px var(--accent-glow);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 #888;
     }
 
-    #analyzeBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+    #analyzeBtn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 #888;
+    }
+
+    #analyzeBtn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 3px 3px 0 #888;
+    }
 
     #clearBtn {
-      padding: 13px 18px;
+      padding: 12px 16px;
       background: transparent;
-      border: 1px solid var(--border);
       color: var(--subtext);
-      font-size: 13px;
+      box-shadow: 3px 3px 0 var(--border);
     }
 
-    #clearBtn:hover { border-color: var(--muted); color: var(--text); }
+    #clearBtn:hover { color: var(--text); }
 
-    /* ---------- Result ---------- */
+    /* ---- result ---- */
     #result {
       display: none;
       width: 100%;
-      max-width: 640px;
-      animation: fadeUp .35s ease;
+      max-width: 580px;
+      margin-top: 16px;
+      animation: popIn .2s ease;
     }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(6px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .result-card {
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      padding: 24px;
-      transition: all .3s;
+    .result-inner {
+      padding: 22px;
+      border: 2px solid;
     }
 
-    .result-card.safe   { background: var(--safe-bg);  border-color: rgba(34,197,94,0.25); }
-    .result-card.toxic  { background: var(--toxic-bg); border-color: rgba(239,68,68,0.25); }
+    .result-inner.safe  { background: var(--safe-bg);  border-color: var(--safe);  box-shadow: 4px 4px 0 var(--safe); }
+    .result-inner.toxic { background: var(--toxic-bg); border-color: var(--toxic); box-shadow: 4px 4px 0 var(--toxic); }
 
-    .result-top {
+    .verdict-row {
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .verdict-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      line-height: 1;
     }
 
-    .safe  .verdict-icon { background: rgba(34,197,94,0.15); }
-    .toxic .verdict-icon { background: rgba(239,68,68,0.15); }
+    .verdict-text {}
 
-    .verdict-label {
+    .verdict-main {
+      font-family: 'Space Mono', monospace;
       font-size: 20px;
       font-weight: 700;
-      letter-spacing: -0.3px;
+      letter-spacing: -0.5px;
     }
 
-    .safe  .verdict-label { color: var(--safe); }
-    .toxic .verdict-label { color: var(--toxic); }
+    .safe  .verdict-main { color: var(--safe); }
+    .toxic .verdict-main { color: var(--toxic); }
 
-    .verdict-sub {
+    .verdict-desc {
       font-size: 12px;
       color: var(--subtext);
       margin-top: 2px;
     }
 
-    /* Confidence bar */
-    .conf-label {
+    /* confidence */
+    .conf-header {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       color: var(--subtext);
       margin-bottom: 6px;
     }
 
-    .conf-label span:last-child {
-      font-weight: 600;
-      color: var(--text);
-    }
-
     .bar-track {
-      height: 8px;
-      background: var(--border);
-      border-radius: 99px;
+      height: 10px;
+      background: rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.15);
+      position: relative;
       overflow: hidden;
     }
 
     .bar-fill {
       height: 100%;
-      border-radius: 99px;
-      transition: width .6s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      /* pixel stripe effect */
+      background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 6px,
+        rgba(255,255,255,0.25) 6px,
+        rgba(255,255,255,0.25) 8px
+      );
     }
 
-    .safe  .bar-fill { background: var(--safe); }
-    .toxic .bar-fill { background: var(--toxic); }
+    .safe  .bar-fill { background-color: var(--safe); }
+    .toxic .bar-fill { background-color: var(--toxic); }
 
-    /* ---------- Error ---------- */
+    /* ---- error ---- */
     #error {
       display: none;
       width: 100%;
-      max-width: 640px;
-      background: rgba(239,68,68,0.08);
-      border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 13px;
-      color: #fca5a5;
-      animation: fadeUp .3s ease;
-    }
-
-    /* ---------- Loader ---------- */
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ---------- Footer ---------- */
-    footer {
-      margin-top: 40px;
+      max-width: 580px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--toxic-bg);
+      border: 2px solid var(--toxic);
+      box-shadow: 3px 3px 0 var(--toxic);
+      font-family: 'Space Mono', monospace;
       font-size: 11px;
-      color: var(--muted);
+      color: var(--toxic);
+    }
+
+    /* ---- loader dots ---- */
+    .dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+
+    /* ---- footer ---- */
+    footer {
+      margin-top: 32px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--border);
+      letter-spacing: 1px;
       text-align: center;
     }
   </style>
@@ -342,50 +317,39 @@
 <body>
 
   <header>
-    <div class="badge">AI Powered</div>
-    <h1>Toxic Comment Detector</h1>
-    <p>Paste any comment below and the model will tell you if it is toxic or safe.</p>
+    <div class="tag">&#9632; ML Project</div>
+    <h1>Toxic Comment<br/>Detector</h1>
+    <p>Paste a comment. The model tells you if it's toxic.</p>
   </header>
 
-  <!-- Main input card -->
-  <div class="card">
-
-    <!-- API URL setting -->
-    <div class="url-row">
-      <label for="apiUrl">API URL</label>
-      <input
-        type="text"
-        id="apiUrl"
-        placeholder="https://your-app.up.railway.app"
-        value="https://toxic-comment-detector.up.railway.app"
-      />
-    </div>
-
-    <label class="main-label" for="commentInput">Comment to Analyze</label>
+  <div class="card pixel-box">
+    <label class="input-label" for="commentInput">Comment</label>
     <textarea
       id="commentInput"
       placeholder="Type or paste a comment here..."
       maxlength="2000"
     ></textarea>
-    <div class="char-count"><span id="charCount">0</span> / 2000</div>
+    <div class="meta-row">
+      <span class="char-count" id="charCount">0 / 2000</span>
+      <span class="hint">Ctrl + Enter to analyze</span>
+    </div>
 
     <div class="btn-row">
-      <button id="analyzeBtn" onclick="analyze()">Analyze Comment</button>
+      <button id="analyzeBtn" onclick="analyze()">Analyze</button>
       <button id="clearBtn" onclick="clearAll()">Clear</button>
     </div>
   </div>
 
-  <!-- Result -->
   <div id="result">
-    <div class="result-card" id="resultCard">
-      <div class="result-top">
+    <div class="result-inner" id="resultCard">
+      <div class="verdict-row">
         <div class="verdict-icon" id="verdictIcon"></div>
-        <div>
-          <div class="verdict-label" id="verdictLabel"></div>
-          <div class="verdict-sub" id="verdictSub"></div>
+        <div class="verdict-text">
+          <div class="verdict-main" id="verdictMain"></div>
+          <div class="verdict-desc" id="verdictDesc"></div>
         </div>
       </div>
-      <div class="conf-label">
+      <div class="conf-header">
         <span>Confidence</span>
         <span id="confValue"></span>
       </div>
@@ -395,106 +359,88 @@
     </div>
   </div>
 
-  <!-- Error -->
   <div id="error"></div>
 
-  <footer>Bidirectional LSTM &nbsp;|&nbsp; Threshold 0.846 &nbsp;|&nbsp; Jigsaw Dataset</footer>
+  <footer>BiLSTM &nbsp;&#9632;&nbsp; Threshold 0.846 &nbsp;&#9632;&nbsp; Jigsaw Dataset</footer>
 
   <script>
+    const API = "https://toxic-comment-detector.up.railway.app";
+
     const commentInput = document.getElementById('commentInput');
     const charCount    = document.getElementById('charCount');
     const analyzeBtn   = document.getElementById('analyzeBtn');
 
     commentInput.addEventListener('input', () => {
-      charCount.textContent = commentInput.value.length;
+      charCount.textContent = commentInput.value.length + ' / 2000';
+    });
+
+    commentInput.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') analyze();
     });
 
     async function analyze() {
-      const text    = commentInput.value.trim();
-      const apiBase = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+      const text = commentInput.value.trim();
 
-      // Reset
       document.getElementById('result').style.display = 'none';
       document.getElementById('error').style.display  = 'none';
 
-      if (!text) {
-        showError('Please enter a comment first.');
-        return;
-      }
-      if (!apiBase) {
-        showError('Please enter your Railway API URL at the top.');
-        return;
-      }
+      if (!text) { showError('Please enter a comment first.'); return; }
 
-      // Loading state
       analyzeBtn.disabled = true;
-      analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+      analyzeBtn.innerHTML = '<span class="dots">Analyzing</span>';
 
       try {
-        const res = await fetch(`${apiBase}/predict`, {
+        const res = await fetch(`${API}/predict`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
 
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-
-        const data = await res.json();
-        showResult(data);
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        showResult(await res.json());
 
       } catch (err) {
-        showError(`Request failed: ${err.message}. Make sure the API URL is correct and the server is running.`);
+        showError('Request failed: ' + err.message);
       } finally {
         analyzeBtn.disabled = false;
-        analyzeBtn.innerHTML = 'Analyze Comment';
+        analyzeBtn.textContent = 'Analyze';
       }
     }
 
     function showResult(data) {
-      const isToxic   = data.is_toxic;
-      const conf      = data.confidence;
-      const confPct   = (conf * 100).toFixed(1);
+      const isToxic = data.is_toxic;
+      const pct     = (data.confidence * 100).toFixed(1);
 
-      const card      = document.getElementById('resultCard');
-      const icon      = document.getElementById('verdictIcon');
-      const label     = document.getElementById('verdictLabel');
-      const sub       = document.getElementById('verdictSub');
-      const confVal   = document.getElementById('confValue');
-      const bar       = document.getElementById('barFill');
+      const card = document.getElementById('resultCard');
+      card.className = 'result-inner ' + (isToxic ? 'toxic' : 'safe');
 
-      card.className  = 'result-card ' + (isToxic ? 'toxic' : 'safe');
-      icon.textContent = isToxic ? '⚠️' : '✅';
-      label.textContent = isToxic ? 'Toxic' : 'Safe';
-      sub.textContent   = isToxic
-        ? 'This comment appears to be harmful or offensive.'
-        : 'This comment appears to be safe and non-offensive.';
-      confVal.textContent = confPct + '%';
+      document.getElementById('verdictIcon').textContent = isToxic ? '[!]' : '[✓]';
+      document.getElementById('verdictMain').textContent = isToxic ? 'Toxic' : 'Safe';
+      document.getElementById('verdictDesc').textContent = isToxic
+        ? 'This comment appears harmful or offensive.'
+        : 'This comment appears safe and non-offensive.';
+      document.getElementById('confValue').textContent = pct + '%';
 
-      // Animate bar after a tick
+      const bar = document.getElementById('barFill');
       bar.style.width = '0%';
-      setTimeout(() => { bar.style.width = confPct + '%'; }, 30);
+      setTimeout(() => { bar.style.width = pct + '%'; }, 30);
 
       document.getElementById('result').style.display = 'block';
     }
 
     function showError(msg) {
       const el = document.getElementById('error');
-      el.textContent = '⚠  ' + msg;
+      el.textContent = '>> ERROR: ' + msg;
       el.style.display = 'block';
     }
 
     function clearAll() {
       commentInput.value = '';
-      charCount.textContent = '0';
+      charCount.textContent = '0 / 2000';
       document.getElementById('result').style.display = 'none';
       document.getElementById('error').style.display  = 'none';
       commentInput.focus();
     }
-
-    // Allow Ctrl+Enter to submit
-    commentInput.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'Enter') analyze();
-    });
   </script>
 
 </body>
