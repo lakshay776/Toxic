@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import torch
@@ -70,6 +71,14 @@ app = FastAPI(
     title="Toxic Comment Detector",
     description="Inference API for the PyTorch LSTM model.",
     lifespan=lifespan,
+)
+
+# Allow all origins so the HTML frontend can call this API from any domain
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 5. Define Preprocessing Functions

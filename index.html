@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toxic Comment Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161921;
+      --border:    #242830;
+      --muted:     #3a3f4d;
+      --text:      #e2e8f0;
+      --subtext:   #7a8394;
+      --accent:    #6366f1;
+      --accent-glow: rgba(99,102,241,0.25);
+      --safe:      #22c55e;
+      --safe-bg:   rgba(34,197,94,0.08);
+      --toxic:     #ef4444;
+      --toxic-bg:  rgba(239,68,68,0.08);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 16px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.8); }
+    }
+
+    h1 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--subtext);
+      font-size: 14px;
+      max-width: 380px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ---------- Card ---------- */
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+
+    /* ---------- API URL row ---------- */
+    .url-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .url-row label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--subtext);
+      white-space: nowrap;
+    }
+
+    .url-row input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--muted);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Inter', monospace;
+      font-size: 12px;
+      padding: 7px 12px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .url-row input:focus { border-color: var(--accent); }
+
+    /* ---------- Textarea ---------- */
+    label.main-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--subtext);
+      margin-bottom: 10px;
+      letter-spacing: .3px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 130px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea::placeholder { color: var(--muted); }
+
+    .char-count {
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ---------- Button ---------- */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      transition: all .2s;
+    }
+
+    #analyzeBtn {
+      flex: 1;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      letter-spacing: .3px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #analyzeBtn:hover:not(:disabled) {
+      background: #4f52d9;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    #analyzeBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    #clearBtn {
+      padding: 13px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      font-size: 13px;
+    }
+
+    #clearBtn:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ---------- Result ---------- */
+    #result {
+      display: none;
+      width: 100%;
+      max-width: 640px;
+      animation: fadeUp .35s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-card {
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      transition: all .3s;
+    }
+
+    .result-card.safe   { background: var(--safe-bg);  border-color: rgba(34,197,94,0.25); }
+    .result-card.toxic  { background: var(--toxic-bg); border-color: rgba(239,68,68,0.25); }
+
+    .result-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .verdict-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .safe  .verdict-icon { background: rgba(34,197,94,0.15); }
+    .toxic .verdict-icon { background: rgba(239,68,68,0.15); }
+
+    .verdict-label {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .safe  .verdict-label { color: var(--safe); }
+    .toxic .verdict-label { color: var(--toxic); }
+
+    .verdict-sub {
+      font-size: 12px;
+      color: var(--subtext);
+      margin-top: 2px;
+    }
+
+    /* Confidence bar */
+    .conf-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 6px;
+    }
+
+    .conf-label span:last-child {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .bar-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .safe  .bar-fill { background: var(--safe); }
+    .toxic .bar-fill { background: var(--toxic); }
+
+    /* ---------- Error ---------- */
+    #error {
+      display: none;
+      width: 100%;
+      max-width: 640px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #fca5a5;
+      animation: fadeUp .3s ease;
+    }
+
+    /* ---------- Loader ---------- */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------- Footer ---------- */
+    footer {
+      margin-top: 40px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">AI Powered</div>
+    <h1>Toxic Comment Detector</h1>
+    <p>Paste any comment below and the model will tell you if it is toxic or safe.</p>
+  </header>
+
+  <!-- Main input card -->
+  <div class="card">
+
+    <!-- API URL setting -->
+    <div class="url-row">
+      <label for="apiUrl">API URL</label>
+      <input
+        type="text"
+        id="apiUrl"
+        placeholder="https://your-app.up.railway.app"
+        value="https://toxic-comment-detector.up.railway.app"
+      />
+    </div>
+
+    <label class="main-label" for="commentInput">Comment to Analyze</label>
+    <textarea
+      id="commentInput"
+      placeholder="Type or paste a comment here..."
+      maxlength="2000"
+    ></textarea>
+    <div class="char-count"><span id="charCount">0</span> / 2000</div>
+
+    <div class="btn-row">
+      <button id="analyzeBtn" onclick="analyze()">Analyze Comment</button>
+      <button id="clearBtn" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result">
+    <div class="result-card" id="resultCard">
+      <div class="result-top">
+        <div class="verdict-icon" id="verdictIcon"></div>
+        <div>
+          <div class="verdict-label" id="verdictLabel"></div>
+          <div class="verdict-sub" id="verdictSub"></div>
+        </div>
+      </div>
+      <div class="conf-label">
+        <span>Confidence</span>
+        <span id="confValue"></span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="barFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="error"></div>
+
+  <footer>Bidirectional LSTM &nbsp;|&nbsp; Threshold 0.846 &nbsp;|&nbsp; Jigsaw Dataset</footer>
+
+  <script>
+    const commentInput = document.getElementById('commentInput');
+    const charCount    = document.getElementById('charCount');
+    const analyzeBtn   = document.getElementById('analyzeBtn');
+
+    commentInput.addEventListener('input', () => {
+      charCount.textContent = commentInput.value.length;
+    });
+
+    async function analyze() {
+      const text    = commentInput.value.trim();
+      const apiBase = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+
+      // Reset
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('error').style.display  = 'none';
+
+      if (!text) {
+        showError('Please enter a comment first.');
+        return;
+      }
+      if (!apiBase) {
+        showError('Please enter your Railway API URL at the top.');
+        return;
+      }
+
+      // Loading state
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+      try {
+        const res = await fetch(`${apiBase}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
+        const data = await res.json();
+        showResult(data);
+
+      } catch (err) {
+        showError(`Request failed: ${err.message}. Make sure the API URL is correct and the server is running.`);
+      } finally {
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = 'Analyze Comment';
+      }
+    }
+
+    function showResult(data) {
+      const isToxic   = data.is_toxic;
+      const conf      = data.confidence;
+      const confPct   = (conf * 100).toFixed(1);
+
+      const card      = document.getElementById('resultCard');
+      const icon      = document.getElementById('verdictIcon');
+      const label     = document.getElementById('verdictLabel');
+      const sub       = document.getElementById('verdictSub');
+      const confVal   = document.getElementById('confValue');
+      const bar       = document.getElementById('barFill');
+
+      card.className  = 'result-card ' + (isToxic ? 'toxic' : 'safe');
+      icon.textContent = isToxic ? '⚠️' : '✅';
+      label.textContent = isToxic ? 'Toxic' : 'Safe';
+      sub.textContent   = isToxic
+        ? 'This comment appears to be harmful or offensive.'
+        : 'This comment appears to be safe and non-offensive.';
+      confVal.textContent = confPct + '%';
+
+      // Animate bar after a tick
+      bar.style.width = '0%';
+      setTimeout(() => { bar.style.width = confPct + '%'; }, 30);
+
+      document.getElementById('result').style.display = 'block';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = '⚠  ' + msg;
+      el.style.display = 'block';
+    }
+
+    function clearAll() {
+      commentInput.value = '';
+      charCount.textContent = '0';
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('error').style.display  = 'none';
+      commentInput.focus();
+    }
+
+    // Allow Ctrl+Enter to submit
+    commentInput.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') analyze();
+    });
+  </script>
+
+</body>
+</html>
