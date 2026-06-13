@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
     model = ToxicLSTM(vocab_size=len(word2idx)).to(device)
 
     # Load state dict safely handling CPU/GPU
-    model.load_state_dict(torch.load("toxic_lstm.pt", map_location=device, weights_only=True))
+    model.load_state_dict(torch.load("toxic_lstm.pt", map_location=device, weights_only=False))
     model.eval()  # Set to evaluation mode
     print("Models successfully loaded and ready for inference!")
 
